@@ -143,7 +143,7 @@ Please search for and analyze:
 3. Regional land value trends and market conditions
 4. Comparable properties of similar size (${propertyData.acreage} acres) and characteristics
 
-Based on your web search findings, provide a complete valuation analysis in this JSON format:
+Based on your web search findings, provide a complete valuation analysis as a clean JSON object. IMPORTANT: In the "narrative" field, write a clear, professional explanation in plain English without any JSON formatting, code blocks, or technical markup. The narrative should read like a professional appraiser's report.
 
 {
   "property": {
@@ -155,15 +155,15 @@ Based on your web search findings, provide a complete valuation analysis in this
     "features": ["list of key property features"]
   },
   "valuation": {
-    "p10": [conservative estimate per acre],
-    "p50": [most likely estimate per acre],
-    "p90": [optimistic estimate per acre],
-    "totalValue": [total property value at P50],
-    "pricePerAcre": [P50 value],
+    "p10": [conservative estimate per acre as number],
+    "p50": [most likely estimate per acre as number],
+    "p90": [optimistic estimate per acre as number],
+    "totalValue": [total property value at P50 as number],
+    "pricePerAcre": [P50 value as number],
     "confidence": [0.0 to 1.0 confidence score]
   },
   "analysis": {
-    "narrative": "Detailed explanation of valuation based on current market research and web search findings",
+    "narrative": "Write a clear, professional explanation in plain English describing your valuation reasoning, market conditions, and findings from web search. Do not include any JSON, code formatting, or technical markup in this text.",
     "keyFactors": ["list of factors affecting property value"],
     "confidence": [0.0 to 1.0 confidence score]
   },
@@ -172,9 +172,9 @@ Based on your web search findings, provide a complete valuation analysis in this
       "description": "Property description from web search",
       "location": "Sale location",
       "date": "Sale date",
-      "pricePerAcre": [price per acre],
-      "totalPrice": [total sale price],
-      "acreage": [property size],
+      "pricePerAcre": [price per acre as number],
+      "totalPrice": [total sale price as number],
+      "acreage": [property size as number],
       "features": ["property features"],
       "sourceUrl": "URL of the source"
     }
@@ -230,16 +230,57 @@ Search for authentic, current market data from sources like USDA, university ext
     // Parse JSON from the response
     let parsedResponse;
     try {
-      // Find JSON in the response text
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        parsedResponse = JSON.parse(jsonMatch[0]);
+      // Find JSON in the response text - look for the complete JSON object
+      const jsonMatch = content.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+      let jsonString = "";
+      
+      if (jsonMatch && jsonMatch[1]) {
+        jsonString = jsonMatch[1];
       } else {
-        throw new Error('No JSON found in response');
+        // Try to find JSON without code blocks
+        const directJsonMatch = content.match(/\{[\s\S]*\}/);
+        if (directJsonMatch) {
+          jsonString = directJsonMatch[0];
+        } else {
+          throw new Error('No JSON found in response');
+        }
       }
+      
+      // Clean up JSON string - remove any formatting issues
+      jsonString = jsonString
+        .replace(/(\d+),(\d+)/g, '$1$2') // Remove commas from numbers like 1,100 -> 1100
+        .replace(/,(\s*[}\]])/g, '$1'); // Remove trailing commas
+      
+      parsedResponse = JSON.parse(jsonString);
+      
+      // Clean up the narrative - remove any JSON code blocks and extra formatting
+      if (parsedResponse.analysis && parsedResponse.analysis.narrative) {
+        let narrative = parsedResponse.analysis.narrative;
+        // Remove any embedded JSON code blocks
+        narrative = narrative.replace(/```json[\s\S]*?```/g, '');
+        // Remove excessive whitespace and newlines
+        narrative = narrative.replace(/\s+/g, ' ').trim();
+        // Remove any **Note:** sections
+        narrative = narrative.replace(/\*\*Note:\*\*.*$/i, '').trim();
+        parsedResponse.analysis.narrative = narrative;
+      }
+      
     } catch (parseError) {
       console.error('Failed to parse OpenAI response:', parseError);
       console.log('Response content:', content);
+      
+      // Extract narrative from the response content, removing JSON blocks
+      let cleanNarrative = content
+        .replace(/```json[\s\S]*?```/g, '') // Remove JSON code blocks
+        .replace(/\*\*Note:\*\*.*$/im, '') // Remove note sections
+        .replace(/Based on recent market data[\s\S]*?here is a comprehensive valuation analysis:/i, '') // Remove intro
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .trim();
+      
+      // If the narrative is still too technical, extract key insights
+      if (cleanNarrative.length < 100) {
+        cleanNarrative = `Based on current web search analysis of farmland markets in ${propertyData.location}, this ${propertyData.acreage}-acre ${propertyData.irrigated ? 'irrigated' : 'dryland'} property reflects regional market trends and comparable sales data.`;
+      }
       
       // Fallback: Create structured response from text analysis
       parsedResponse = {
@@ -264,7 +305,7 @@ Search for authentic, current market data from sources like USDA, university ext
           confidence: 0.7
         },
         analysis: {
-          narrative: content,
+          narrative: cleanNarrative,
           keyFactors: ["Current market analysis based on web search", "Regional farmland trends", "Property characteristics"],
           confidence: 0.7
         },
