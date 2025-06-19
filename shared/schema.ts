@@ -90,26 +90,6 @@ export const valuations = pgTable("valuations", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const sessions = pgTable("sessions", {
-  id: serial("id").primaryKey(),
-  sessionId: text("session_id").unique().notNull(),
-  ipAddress: text("ip_address"),
-  userAgent: text("user_agent"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  lastActiveAt: timestamp("last_active_at").defaultNow().notNull(),
-});
-
-// Relations
-export const valuationRelations = relations(valuations, ({ one }) => ({
-  session: one(sessions, {
-    fields: [valuations.id],
-    references: [sessions.id],
-  }),
-}));
-
-export const sessionRelations = relations(sessions, ({ many }) => ({
-  valuations: many(valuations),
-}));
 
 // Drizzle schemas
 export const insertValuationSchema = createInsertSchema(valuations).omit({
@@ -120,16 +100,6 @@ export const insertValuationSchema = createInsertSchema(valuations).omit({
 
 export const selectValuationSchema = createSelectSchema(valuations);
 
-export const insertSessionSchema = createInsertSchema(sessions).omit({
-  id: true,
-  createdAt: true,
-  lastActiveAt: true,
-});
-
-export const selectSessionSchema = createSelectSchema(sessions);
-
 // Types
 export type Valuation = typeof valuations.$inferSelect;
 export type InsertValuation = typeof valuations.$inferInsert;
-export type Session = typeof sessions.$inferSelect;
-export type InsertSession = typeof sessions.$inferInsert;
