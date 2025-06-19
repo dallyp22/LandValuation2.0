@@ -64,6 +64,7 @@ export interface WebSource {
 // Function definitions for OpenAI function calling
 const functions = [
   {
+    type: "function" as const,
     name: "parsePropertyInput",
     description: "Extract location, acreage, crop type, and irrigation from raw user input",
     parameters: {
@@ -72,9 +73,11 @@ const functions = [
         rawInput: { type: "string" }
       },
       required: ["rawInput"]
-    }
+    },
+    strict: true
   },
   {
+    type: "function" as const,
     name: "calculateValuation",
     description: "Estimate a value range based on reasoning over comp summaries from web search.",
     parameters: {
@@ -89,9 +92,11 @@ const functions = [
         irrigated: { type: "boolean" }
       },
       required: ["compSummaries", "targetAcreage", "location"]
-    }
+    },
+    strict: true
   },
   {
+    type: "function" as const,
     name: "generateNarrative",
     description: "Explain the valuation result and logic in natural language",
     parameters: {
@@ -101,7 +106,25 @@ const functions = [
         userInput: { type: "string" }
       },
       required: ["valuationData"]
-    }
+    },
+    strict: true
+  },
+  {
+    type: "function" as const,
+    name: "valuationResult",
+    description: "Return the full land valuation result including comparable sales and sources",
+    parameters: {
+      type: "object",
+      properties: {
+        property: { type: "object" },
+        valuation: { type: "object" },
+        analysis: { type: "object" },
+        comparableSales: { type: "array", items: { type: "object" } },
+        sources: { type: "array", items: { type: "object" } }
+      },
+      required: ["property", "valuation", "analysis"]
+    },
+    strict: true
   }
 ];
 
@@ -130,7 +153,8 @@ export async function generateLandValuation(propertyData: PropertyData): Promise
             type: "approximate",
             country: "US"
           }
-        }
+        },
+        ...functions
       ],
       input: `As a professional agricultural land appraiser, please search for recent farmland sales data and provide a comprehensive valuation for this property:
 
@@ -195,100 +219,66 @@ Based on your web search findings, provide a complete valuation analysis as a cl
 }
 
 Search for authentic, current market data from sources like USDA, university extension services, farm real estate companies, auction results, and agricultural publications. Focus on recent transactions and current market conditions to provide the most accurate valuation possible.`,
-      tool_choice: { type: "web_search_preview" }
+      tool_choice: "auto"
     });
 
-    // Extract the response content
     let content = "";
     let webSearchSources: WebSource[] = [];
-    
+    let functionOutput: any = null;
+    let toolCalls: any[] = [];
+
     if (response.output && Array.isArray(response.output)) {
       for (const item of response.output) {
-        if (item.type === "message" && item.content) {
-          for (const contentItem of item.content) {
-            if (contentItem.type === "output_text") {
-              content = contentItem.text;
-              
-              // Extract citations from annotations
-              if (contentItem.annotations) {
-                for (const annotation of contentItem.annotations) {
-                  if (annotation.type === "url_citation") {
-                    webSearchSources.push({
-                      title: annotation.title || "Web Search Result",
-                      organization: new URL(annotation.url).hostname,
-                      url: annotation.url
-                    });
+        if (item.type === "message") {
+          const msg: any = item;
+          if (msg.content) {
+            for (const contentItem of msg.content) {
+              if (contentItem.type === "output_text") {
+                content += contentItem.text;
+                if (contentItem.annotations) {
+                  for (const annotation of contentItem.annotations) {
+                    if (annotation.type === "url_citation") {
+                      webSearchSources.push({
+                        title: annotation.title || "Web Search Result",
+                        organization: new URL(annotation.url).hostname,
+                        url: annotation.url,
+                      });
+                    }
                   }
                 }
               }
             }
           }
+          if (msg.tool_calls) {
+            toolCalls.push(...msg.tool_calls);
+          }
+        } else if ((item as any).type === "function_call_output") {
+          try {
+            functionOutput = JSON.parse((item as any).output);
+          } catch (err) {
+            console.error("Failed to parse function output", err);
+          }
         }
       }
-    } else if (response.output_text) {
-      content = response.output_text;
     }
 
-    if (!content) {
-      throw new Error('No response received from OpenAI web search');
-    }
+    let parsedResponse = functionOutput;
 
-    // Parse JSON from the response
-    let parsedResponse;
-    try {
-      // Find JSON in the response text - look for the complete JSON object
-      const jsonMatch = content.match(/```json\s*(\{[\s\S]*?\})\s*```/);
-      let jsonString = "";
-      
-      if (jsonMatch && jsonMatch[1]) {
-        jsonString = jsonMatch[1];
-      } else {
-        // Try to find JSON without code blocks
-        const directJsonMatch = content.match(/\{[\s\S]*\}/);
-        if (directJsonMatch) {
-          jsonString = directJsonMatch[0];
-        } else {
-          throw new Error('No JSON found in response');
+    if (!parsedResponse && toolCalls.length > 0) {
+      for (const call of toolCalls) {
+        try {
+          const args = JSON.parse(call.function?.arguments ?? "{}");
+          if (call.function?.name === "valuationResult") {
+            parsedResponse = args;
+            break;
+          }
+        } catch (err) {
+          console.error("Failed to parse tool call", err);
         }
       }
-      
-      // Clean up JSON string - remove any formatting issues
-      jsonString = jsonString
-        .replace(/(\d+),(\d+)/g, '$1$2') // Remove commas from numbers like 1,100 -> 1100
-        .replace(/,(\s*[}\]])/g, '$1'); // Remove trailing commas
-      
-      parsedResponse = JSON.parse(jsonString);
-      
-      // Clean up the narrative - remove any JSON code blocks and extra formatting
-      if (parsedResponse.analysis && parsedResponse.analysis.narrative) {
-        let narrative = parsedResponse.analysis.narrative;
-        // Remove any embedded JSON code blocks
-        narrative = narrative.replace(/```json[\s\S]*?```/g, '');
-        // Remove excessive whitespace and newlines
-        narrative = narrative.replace(/\s+/g, ' ').trim();
-        // Remove any **Note:** sections
-        narrative = narrative.replace(/\*\*Note:\*\*.*$/i, '').trim();
-        parsedResponse.analysis.narrative = narrative;
-      }
-      
-    } catch (parseError) {
-      console.error('Failed to parse OpenAI response:', parseError);
-      console.log('Response content:', content);
-      
-      // Extract narrative from the response content, removing JSON blocks
-      let cleanNarrative = content
-        .replace(/```json[\s\S]*?```/g, '') // Remove JSON code blocks
-        .replace(/\*\*Note:\*\*.*$/im, '') // Remove note sections
-        .replace(/Based on recent market data[\s\S]*?here is a comprehensive valuation analysis:/i, '') // Remove intro
-        .replace(/\s+/g, ' ') // Normalize whitespace
-        .trim();
-      
-      // If the narrative is still too technical, extract key insights
-      if (cleanNarrative.length < 100) {
-        cleanNarrative = `Based on current web search analysis of farmland markets in ${propertyData.location}, this ${propertyData.acreage}-acre ${propertyData.irrigated ? 'irrigated' : 'dryland'} property reflects regional market trends and comparable sales data.`;
-      }
-      
-      // Fallback: Create structured response from text analysis
+    }
+
+    if (!parsedResponse) {
       parsedResponse = {
         property: {
           location: propertyData.location,
@@ -300,7 +290,7 @@ Search for authentic, current market data from sources like USDA, university ext
             ...(propertyData.irrigated ? ["Irrigated"] : ["Dryland"]),
             ...(propertyData.tillable ? ["Tillable"] : []),
             ...(propertyData.cropType ? [propertyData.cropType] : [])
-          ]
+          ],
         },
         valuation: {
           p10: 7000,
@@ -308,15 +298,15 @@ Search for authentic, current market data from sources like USDA, university ext
           p90: 10000,
           totalValue: Math.round(8500 * propertyData.acreage),
           pricePerAcre: 8500,
-          confidence: 0.7
+          confidence: 0.7,
         },
         analysis: {
-          narrative: cleanNarrative,
+          narrative: content,
           keyFactors: ["Current market analysis based on web search", "Regional farmland trends", "Property characteristics"],
-          confidence: 0.7
+          confidence: 0.7,
         },
         comparableSales: [],
-        sources: webSearchSources
+        sources: webSearchSources,
       };
     }
 
