@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { pgTable, serial, text, timestamp, boolean, integer, decimal, jsonb } from "drizzle-orm/pg-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { relations } from "drizzle-orm";
 
 // Property input schema
 export const propertyInputSchema = z.object({
@@ -58,3 +61,75 @@ export const apiErrorSchema = z.object({
 });
 
 export type ApiError = z.infer<typeof apiErrorSchema>;
+
+// Database Tables
+export const valuations = pgTable("valuations", {
+  id: serial("id").primaryKey(),
+  propertyDescription: text("property_description").notNull(),
+  location: text("location").notNull(),
+  acreage: decimal("acreage", { precision: 10, scale: 2 }).notNull(),
+  irrigated: boolean("irrigated").default(false),
+  tillable: boolean("tillable").default(false),
+  cropType: text("crop_type"),
+  
+  // Valuation results
+  p10: integer("p10").notNull(),
+  p50: integer("p50").notNull(),
+  p90: integer("p90").notNull(),
+  totalValue: integer("total_value").notNull(),
+  pricePerAcre: integer("price_per_acre").notNull(),
+  confidence: decimal("confidence", { precision: 3, scale: 2 }).notNull(),
+  
+  // Analysis and metadata
+  narrative: text("narrative").notNull(),
+  keyFactors: jsonb("key_factors").$type<string[]>().notNull(),
+  comparableSales: jsonb("comparable_sales").$type<any[]>().notNull(),
+  sources: jsonb("sources").$type<any[]>().notNull(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const sessions = pgTable("sessions", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").unique().notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastActiveAt: timestamp("last_active_at").defaultNow().notNull(),
+});
+
+// Relations
+export const valuationRelations = relations(valuations, ({ one }) => ({
+  session: one(sessions, {
+    fields: [valuations.id],
+    references: [sessions.id],
+  }),
+}));
+
+export const sessionRelations = relations(sessions, ({ many }) => ({
+  valuations: many(valuations),
+}));
+
+// Drizzle schemas
+export const insertValuationSchema = createInsertSchema(valuations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const selectValuationSchema = createSelectSchema(valuations);
+
+export const insertSessionSchema = createInsertSchema(sessions).omit({
+  id: true,
+  createdAt: true,
+  lastActiveAt: true,
+});
+
+export const selectSessionSchema = createSelectSchema(sessions);
+
+// Types
+export type Valuation = typeof valuations.$inferSelect;
+export type InsertValuation = typeof valuations.$inferInsert;
+export type Session = typeof sessions.$inferSelect;
+export type InsertSession = typeof sessions.$inferInsert;
