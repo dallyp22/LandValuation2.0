@@ -22,9 +22,10 @@ LandIQ is a modern web application that provides real-time land property valuati
 - **Development**: Vite for fast development builds and HMR
 
 ### Database Strategy
-- **Current**: In-memory storage using Map-based implementation
-- **Future**: Drizzle ORM configured for PostgreSQL integration
-- **Migration Ready**: Drizzle config points to PostgreSQL for easy database addition
+- **Current**: PostgreSQL database with Drizzle ORM
+- **Storage**: Valuation history, session tracking, and user analytics
+- **Tables**: valuations (property data and results), sessions (user activity tracking)
+- **Features**: Full CRUD operations, location-based queries, historical analysis
 
 ## Key Components
 
@@ -95,6 +96,12 @@ LandIQ is a modern web application that provides real-time land property valuati
 - Development vs production environment detection
 
 ## Recent Changes
+- June 19, 2025: Added PostgreSQL database with full persistence
+  - Implemented Drizzle ORM with valuations and sessions tables
+  - Added valuation history storage and retrieval endpoints
+  - Created history page with location-based filtering
+  - Added recent valuations preview to main interface
+  - Database automatically stores all property valuations with metadata
 - June 19, 2025: Updated OpenAI integration to use Responses API with web search
   - Implemented GPT-4.1 with web_search_preview tool for real-time market data
   - Added automatic citation extraction from web search results

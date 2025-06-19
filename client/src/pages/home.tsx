@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { PropertyForm } from "@/components/property-form";
 import { ValuationResults } from "@/components/valuation-results";
+import { ValuationHistory } from "@/components/valuation-history";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle, TrendingUp, Bot } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
@@ -63,6 +64,12 @@ export default function Home() {
                 <Bot className="h-4 w-4 text-primary" />
                 <span>Powered by GPT-4.1 + Web Search</span>
               </div>
+              <a 
+                href="/history" 
+                className="text-sm text-gray-600 hover:text-primary transition-colors"
+              >
+                History
+              </a>
               <button className="text-gray-500 hover:text-gray-700 transition-colors">
                 <AlertCircle className="h-5 w-5" />
               </button>
@@ -120,6 +127,18 @@ export default function Home() {
             )}
           </div>
         </div>
+
+        {/* Recent Valuations Preview */}
+        {!isLoading && (
+          <div className="mt-12">
+            <ValuationHistory 
+              limit={5}
+              onViewValuation={(id) => {
+                window.location.href = "/history";
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
