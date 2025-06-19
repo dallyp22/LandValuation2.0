@@ -1,9 +1,15 @@
 import OpenAI from "openai";
 
 // Using gpt-4o as requested for GPT-4.1 functionality with web search capabilities
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY 
-});
+const apiKey = process.env.OPENAI_API_KEY;
+
+if (!apiKey) {
+  throw new Error(
+    "Missing OpenAI API key. Please set the OPENAI_API_KEY environment variable."
+  );
+}
+
+const openai = new OpenAI({ apiKey });
 
 export interface PropertyData {
   propertyDescription: string;
