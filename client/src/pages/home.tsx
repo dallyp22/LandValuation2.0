@@ -61,7 +61,7 @@ export default function Home() {
             <div className="flex items-center space-x-4">
               <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-600">
                 <Bot className="h-4 w-4 text-primary" />
-                <span>Powered by GPT-4.1</span>
+                <span>Powered by GPT-4.1 + Web Search</span>
               </div>
               <button className="text-gray-500 hover:text-gray-700 transition-colors">
                 <AlertCircle className="h-5 w-5" />
@@ -91,7 +91,7 @@ export default function Home() {
                     <Card className="bg-gray-50">
                       <CardContent className="pt-4">
                         <div className="flex items-center justify-between text-sm">
-                          <span>Processing with GPT-4.1</span>
+                          <span>Searching web for current market data...</span>
                           <div className="w-4 h-4 border-2 border-gray-400 border-t-emerald-500 rounded-full animate-spin"></div>
                         </div>
                       </CardContent>

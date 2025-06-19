@@ -107,7 +107,7 @@ export function ValuationResults({ result, onNewValuation }: ValuationResultsPro
             </div>
             <div>
               <CardTitle className="text-lg font-semibold text-gray-900">AI Analysis</CardTitle>
-              <p className="text-gray-600 text-sm">GPT-4.1 reasoning and market insights</p>
+              <p className="text-gray-600 text-sm">GPT-4.1 with real-time web search insights</p>
             </div>
           </div>
         </CardHeader>

@@ -94,8 +94,13 @@ LandIQ is a modern web application that provides real-time land property valuati
 - OpenAI API key integration
 - Development vs production environment detection
 
-## Changelog
-- June 19, 2025. Initial setup
+## Recent Changes
+- June 19, 2025: Updated OpenAI integration to use Responses API with web search
+  - Implemented GPT-4.1 with web_search_preview tool for real-time market data
+  - Added automatic citation extraction from web search results
+  - Enhanced property valuation with current farmland sales data
+  - Updated UI to reflect real-time web search capabilities
+- June 19, 2025: Initial project setup with GPT-4o chat completions
 
 ## User Preferences
 
