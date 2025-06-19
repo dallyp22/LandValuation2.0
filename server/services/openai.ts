@@ -344,7 +344,7 @@ Search for authentic, current market data from sources like USDA, university ext
     };
 
     // Validate and clean comparable sales data
-    const comparableSales: ComparableSale[] = (parsedResponse.comparableSales || []).map((sale: any) => ({
+    const comparableSales: ComparableSale[] = (parsedResponse.comparableSales || []).map((sale: any): ComparableSale => ({
       description: sale.description || "Comparable farmland sale",
       location: sale.location || propertyData.location,
       date: sale.date || "Recent",
