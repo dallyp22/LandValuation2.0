@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { ValuationHistory } from "@/components/valuation-history";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { History, Search, MapPin, TrendingUp } from "lucide-react";
 export default function HistoryPage() {
   const [searchLocation, setSearchLocation] = useState("");
   const [activeLocation, setActiveLocation] = useState<string | undefined>();
+  const [, navigate] = useLocation();
 
   const handleLocationSearch = () => {
     if (searchLocation.trim()) {
@@ -146,13 +148,10 @@ export default function HistoryPage() {
         </div>
 
         {/* Valuation History */}
-        <ValuationHistory 
-          limit={20} 
+        <ValuationHistory
+          limit={20}
           location={activeLocation}
-          onViewValuation={(id) => {
-            // TODO: Navigate to detailed valuation view
-            console.log('View valuation:', id);
-          }}
+          onViewValuation={(id) => navigate(`/valuation/${id}`)}
         />
       </div>
     </div>

@@ -360,7 +360,7 @@ Search for authentic, current market data from sources like USDA, university ext
                Math.round(sale.totalPrice / sale.pricePerAcre) : 50,
       features: Array.isArray(sale.features) ? sale.features : [],
       sourceUrl: sale.sourceUrl || undefined
-    })).filter(sale => sale.pricePerAcre > 0 && sale.totalPrice > 0 && sale.acreage > 0);
+    })).filter((sale: ComparableSale) => sale.pricePerAcre > 0 && sale.totalPrice > 0 && sale.acreage > 0);
 
     const sources: WebSource[] = parsedResponse.sources || webSearchSources;
 
