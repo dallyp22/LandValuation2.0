@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Clock, Brain, Search, Link, Download, Share, Plus, ExternalLink } from "lucide-react";
 import type { ValuationResult } from "@/lib/types";
+import { AgentChat } from "./agent-chat";
 
 interface ValuationResultsProps {
   result: ValuationResult;
@@ -237,6 +238,7 @@ export function ValuationResults({ result, onNewValuation }: ValuationResultsPro
           New Valuation
         </Button>
       </div>
+      <AgentChat />
     </div>
   );
 }
