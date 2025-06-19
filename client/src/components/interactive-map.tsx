@@ -7,8 +7,8 @@ import { Label } from "@/components/ui/label";
 import { MapPin, Search, Crosshair, Layers, Info } from "lucide-react";
 import { PropertyLocation } from "@/lib/types";
 
-// You'll need to get a free Mapbox access token from https://account.mapbox.com/
-const MAPBOX_ACCESS_TOKEN = "pk.eyJ1IjoiZXhhbXBsZSIsImEiOiJjbGV4YW1wbGUifQ.example"; // Replace with your token
+// Mapbox access token
+const MAPBOX_ACCESS_TOKEN = "pk.eyJ1IjoiZHBvbGl2a2EyMiIsImEiOiJjbTk4eG9zczMwODRuMmlweG5od3VzNzJvIn0.JusHL37Lpcp-ojEJyqig4Q";
 
 interface InteractiveMapProps {
   onLocationSelect: (location: PropertyLocation) => void;
