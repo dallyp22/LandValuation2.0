@@ -1,7 +1,6 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { propertyInputSchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,15 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 import type { PropertyFormData } from "@/lib/types";
-
-const formSchema = z.object({
-  propertyDescription: z.string().min(10, "Property description must be at least 10 characters"),
-  acreage: z.number().min(0.1, "Acreage must be greater than 0"),
-  location: z.string().min(2, "Location is required"),
-  irrigated: z.boolean().default(false),
-  tillable: z.boolean().default(false),
-  cropType: z.string().optional(),
-});
 
 interface PropertyFormProps {
   onSubmit: (data: PropertyFormData) => void;
@@ -34,7 +24,7 @@ export function PropertyForm({ onSubmit, isLoading }: PropertyFormProps) {
     watch,
     formState: { errors },
   } = useForm<PropertyFormData>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(propertyInputSchema),
     defaultValues: {
       propertyDescription: "",
       acreage: 0,
