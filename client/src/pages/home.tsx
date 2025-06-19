@@ -80,14 +80,14 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Input Form */}
-          <div className="lg:col-span-5">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+          {/* Input Form with Map */}
+          <div className="xl:col-span-7">
             <PropertyForm onSubmit={handleSubmit} isLoading={isLoading} />
           </div>
 
           {/* Results Panel */}
-          <div className="lg:col-span-7">
+          <div className="xl:col-span-5">
             {isLoading && (
               <Card>
                 <CardContent className="pt-8 pb-8">
@@ -119,7 +119,7 @@ export default function Home() {
                     <TrendingUp className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">Ready to Value Your Land</h3>
                     <p className="text-gray-600">
-                      Enter your property details on the left to get started with a real-time valuation.
+                      Select a location on the map and enter your property details to get started with a real-time valuation.
                     </p>
                   </div>
                 </CardContent>

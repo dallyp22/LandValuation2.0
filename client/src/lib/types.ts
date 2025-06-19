@@ -7,6 +7,14 @@ export interface PropertyFormData {
   cropType: string;
 }
 
+export interface PropertyLocation {
+  id: string;
+  latitude: number;
+  longitude: number;
+  address: string;
+  description?: string;
+}
+
 export interface ValuationState {
   isLoading: boolean;
   data: ValuationResult | null;
