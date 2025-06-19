@@ -166,7 +166,6 @@ export function PropertyForm({ onSubmit, isLoading }: PropertyFormProps) {
                   <SelectValue placeholder="Select crop type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Select crop type</SelectItem>
                   <SelectItem value="corn">Corn</SelectItem>
                   <SelectItem value="soybeans">Soybeans</SelectItem>
                   <SelectItem value="wheat">Wheat</SelectItem>
