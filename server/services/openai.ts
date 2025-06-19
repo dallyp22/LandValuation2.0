@@ -9,7 +9,7 @@ if (!apiKey) {
   );
 }
 
-const openai = new OpenAI({ apiKey });
+export const openaiClient = new OpenAI({ apiKey });
 
 export interface PropertyData {
   propertyDescription: string;
@@ -120,7 +120,7 @@ export async function generateLandValuation(propertyData: PropertyData): Promise
     const region = locationParts.length > 1 ? locationParts[0] : propertyData.location;
 
     // Use OpenAI's Responses API with web search to get real-time farmland data
-    const response = await openai.responses.create({
+    const response = await openaiClient.responses.create({
       model: "gpt-4.1",
       tools: [
         {

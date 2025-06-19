@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { propertyInputSchema, valuationResultSchema } from "../shared/schema";
 import { generateLandValuation } from "./services/openai";
+import { handleAgentMessage } from "./services/agent";
 import { storage } from "./storage";
 import { z } from "zod";
 
@@ -129,6 +130,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         message: "Failed to fetch valuation"
       });
+    }
+  });
+
+  // Conversational agent endpoint
+  app.post("/api/agent", async (req, res) => {
+    try {
+      const { sessionId, message } = req.body as { sessionId?: string; message: string };
+      if (!message) {
+        return res.status(400).json({ message: "message is required" });
+      }
+
+      const response = await handleAgentMessage({ sessionId, message });
+      res.json(response);
+    } catch (error) {
+      console.error("Agent error:", error);
+      res.status(500).json({ message: "Failed to process agent request" });
     }
   });
 
