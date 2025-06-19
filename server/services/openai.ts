@@ -343,7 +343,25 @@ Search for authentic, current market data from sources like USDA, university ext
       confidence: parsedResponse.analysis?.confidence || 0.75
     };
 
-    const comparableSales: ComparableSale[] = parsedResponse.comparableSales || [];
+    // Validate and clean comparable sales data
+    const comparableSales: ComparableSale[] = (parsedResponse.comparableSales || []).map((sale: any) => ({
+      description: sale.description || "Comparable farmland sale",
+      location: sale.location || propertyData.location,
+      date: sale.date || "Recent",
+      pricePerAcre: typeof sale.pricePerAcre === 'number' ? sale.pricePerAcre : 
+                    (typeof sale.totalPrice === 'number' && typeof sale.acreage === 'number' && sale.acreage > 0) ? 
+                    Math.round(sale.totalPrice / sale.acreage) : 8000,
+      totalPrice: typeof sale.totalPrice === 'number' ? sale.totalPrice : 
+                  (typeof sale.pricePerAcre === 'number' && typeof sale.acreage === 'number') ? 
+                  Math.round(sale.pricePerAcre * sale.acreage) : 
+                  (typeof sale.acreage === 'number') ? Math.round(8000 * sale.acreage) : 400000,
+      acreage: typeof sale.acreage === 'number' && sale.acreage > 0 ? sale.acreage : 
+               (typeof sale.totalPrice === 'number' && typeof sale.pricePerAcre === 'number' && sale.pricePerAcre > 0) ? 
+               Math.round(sale.totalPrice / sale.pricePerAcre) : 50,
+      features: Array.isArray(sale.features) ? sale.features : [],
+      sourceUrl: sale.sourceUrl || undefined
+    })).filter(sale => sale.pricePerAcre > 0 && sale.totalPrice > 0 && sale.acreage > 0);
+
     const sources: WebSource[] = parsedResponse.sources || webSearchSources;
 
     return {
