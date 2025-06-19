@@ -1,0 +1,132 @@
+## Project Title
+LandIQ: Real-Time Land Valuation Using GPT-4.1 + Web Search (No Database)
+
+---
+
+## Objective
+Build a production-ready land valuation tool that uses **OpenAI's `gpt-4.1` model** combined with **web search** to produce real-time property valuations. No database, ETL, or model training required.
+
+The system will:
+- Parse property descriptions or legal input
+- Trigger a web search to find recent comparable land sales
+- Reason over results using GPT
+- Return a value range with a GPT-generated explanation
+
+---
+
+## 1. Model & Tooling
+
+- Use the `openai.responses.create()` endpoint (not chat completions)
+- Model: `"gpt-4.1"`
+- Tools:
+  ```json
+  [
+    {
+      "type": "web_search_preview",
+      "search_context_size": "medium",
+      "user_location": {
+        "type": "approximate",
+        "country": "US"
+      }
+    }
+  ]
+2. Functions (for GPT function-calling)
+
+Define these callable tools in the functions array:
+
+[
+  {
+    "name": "parsePropertyInput",
+    "description": "Extract location, acreage, crop type, and irrigation from raw user input",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "rawInput": { "type": "string" }
+      },
+      "required": ["rawInput"]
+    }
+  },
+  {
+    "name": "calculateValuation",
+    "description": "Estimate a value range based on reasoning over comp summaries from web search.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "compSummaries": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "targetAcreage": { "type": "number" },
+        "location": { "type": "string" },
+        "irrigated": { "type": "boolean" }
+      },
+      "required": ["compSummaries", "targetAcreage", "location"]
+    }
+  },
+  {
+    "name": "generateNarrative",
+    "description": "Explain the valuation result and logic in natural language",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "valuationData": { "type": "object" },
+        "userInput": { "type": "string" }
+      },
+      "required": ["valuationData"]
+    }
+  }
+]
+3. Web Search Behavior
+
+Use OpenAI’s built-in web_search_preview tool. In your Replit code, structure the request like:
+
+const response = await openai.responses.create({
+  model: "gpt-4.1",
+  tools: [
+    { type: "web_search_preview", search_context_size: "medium" }
+  ],
+  input: "What is 120 acres of irrigated farmland near Kearney, NE worth?",
+  tool_choice: { type: "web_search_preview" }
+});
+Let GPT search with queries like:
+
+“recent farmland sales in Buffalo County NE 2024”
+“price per acre irrigated land Nebraska March 2025”
+4. Frontend (React 18 + Vite + TypeScript)
+
+Create a modern, mobile-friendly UI:
+
+Input Screen
+Raw text box (“120 acres of dryland near Hastings, Nebraska”)
+Optional toggles (e.g. irrigated, crop type)
+Result Screen
+Value Range (P10 / P50 / P90)
+Explanation panel (GPT-generated)
+Web citations list (with links)
+UI Stack:
+Shadcn UI
+TanStack Query
+React Hook Form + Zod
+5. Features & Experience Goals
+
+No login required
+Fast initial response (<8 sec)
+All logic happens through OpenAI calls
+Every valuation comes with transparent citations from web sources
+Fully stateless (no local database, just API logic)
+6. Deliverables
+
+Live working Replit app
+GitHub repo with all code (frontend + OpenAI call logic)
+README with:
+Setup instructions
+Required secrets (OpenAI key)
+Example prompts + citations
+Bonus (Optional Phase 2)
+
+Add a “compare two parcels” feature (dual prompt + side-by-side valuation)
+Add PDF export of result with logo and timestamp
+Add natural-language query memory ("show me this same land if it had pivot irrigation")
+Summary
+
+This version of LandIQ uses GPT-4.1 + web search tool to produce land valuations in real time, citing current sales data and summarizing results via function calling — without the complexity of managing infrastructure or structured databases.
